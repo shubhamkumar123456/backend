@@ -1,7 +1,8 @@
 const express = require('express');
 const { registerUser, loginUser, updateUser, deleteUser } = require('../controllers/userController');
 const router = express.Router();
-const {body} = require('express-validator')
+const {body} = require('express-validator');
+const checkToken = require('../middleware/checkToken');
 
 router.post('/create', [
     body('email').isEmail().withMessage('please enter a valid email'),
@@ -14,7 +15,9 @@ router.post('/login',[
     body('password').isLength({min:6}).withMessage('password must be atleast 6 character long'),  
 ],loginUser)
 
-router.put('/update',updateUser)
+
+
+router.put('/update',checkToken,updateUser)
 router.delete('/delete',deleteUser)
 
 
