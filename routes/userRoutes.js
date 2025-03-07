@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser, updateUser, deleteUser } = require('../controllers/userController');
+const { registerUser, loginUser, updateUser, deleteUser, forgetPassword } = require('../controllers/userController');
 const router = express.Router();
 const {body} = require('express-validator');
 const checkToken = require('../middleware/checkToken');
@@ -18,7 +18,8 @@ router.post('/login',[
 
 
 router.put('/update',checkToken,updateUser)
-router.delete('/delete',deleteUser)
+router.delete('/delete',checkToken,deleteUser)
+router.post('/reset-password',forgetPassword)
 
 
 

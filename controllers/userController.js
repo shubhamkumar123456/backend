@@ -4,6 +4,8 @@ const salt = bcrypt.genSaltSync(10);
 const { validationResult } = require('express-validator')
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = "AbrakaDabra123@"
+const randomstring = require("randomstring");
+const nodemailer = require("nodemailer");
 
 
 
@@ -15,21 +17,19 @@ const registerUser = async (req, res) => {
     if (!error.isEmpty()) {
         return res.status(400).json({ error: error.array() })
     }
-
     const { firstName, lastName, email, password } = req.body
     try {
-
         let user = await userCollection.findOne({ email })
         // console.log("user = ", user)
         if (user) {
             return res.status(401).json({ msg: "user already exists" })
         }
-        let hashedPassword = bcrypt.hashSync(password, salt) // ajfh awk#$%^&*3t3 uryvcvjl
+   
         let data = await userCollection.create({
             firstName,
             lastName,
             email,
-            password: hashedPassword
+            password
         })
         res.status(201).json({ msg: "user created successfully" })
     } catch (error) {
@@ -69,21 +69,95 @@ const loginUser = async (req, res) => {
 }
 const updateUser = async (req, res) => {
     const { firstName, lastName, password, bio } = req.body
-    // const id = req.params.id;
-    const id = req.user._id
 
-    let user = await userCollection.findByIdAndUpdate(id, req.body)
-    res.send("updated successfully")
+   try {
+    const id = req.user._id
+    let user = await userCollection.findOne({_id:id})
+    
+    if(firstName){
+        user.firstName = firstName
+    }
+    if(lastName){
+        user.lastName = lastName
+    }
+    if(password){
+        user.password = password
+    }
+    if(bio){
+        user.bio = bio
+    }
+   
+
+    await user.save()
+    res.status(200).json({msg:"updated successfully"})
+   } catch (error) {
+    res.status(500).json({error:error.message})
+   }
 
 
 }
 const deleteUser = async (req, res) => {
-    res.send("delete is working")
+    // res.send("delete is working")
+    let id = req.user._id;
+   try {
+    let user = await userCollection.findByIdAndDelete(id)
+    res.status(200).json({msg:"account deleted successfully"})
+   } catch (error) {
+    res.status(500).json({error:error.message})
+   }
+
 }
+
+const forgetPassword = async(req,res)=>{
+    const {email} = req.body;
+
+    let user = await userCollection.findOne({email});
+
+    if(user){
+        let resetPasswordCode = randomstring.generate(40);
+        console.log(resetPasswordCode)
+        user.resetPasswordToken = resetPasswordCode;
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false, // true for port 465, false for other ports
+            auth: {
+              user: "your gmail",
+              pass: "your gmail app password",
+            },
+          });
+
+          async function main() {
+            // send mail with defined transport object
+            const info = await transporter.sendMail({
+              from: 'shubhamfarainzi@gmail.com', // sender address
+              to: email, // list of receivers
+              subject: "Reset Your Social media App Password", // Subject line
+              text: `Please click the link below to update your Password \n  http://localhost:8080/users/reset-password/${resetPasswordCode}`, // plain text body
+             
+            });
+          
+            console.log("Message sent: %s", info.messageId);
+            // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
+          }
+          
+          main().catch(console.error);
+
+          res.status(200).json({msg:"please check youe email for futher informations"})
+
+    }
+    else{
+        return res.status(404).json({msg:"user not found"})
+    }
+}
+
 
 module.exports = {
     registerUser,
     loginUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    forgetPassword
 }
