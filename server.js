@@ -11,6 +11,8 @@ const userRoutes = require('./routes/userRoutes')
 app.use(cors())
 app.use(express.json())
 
+app.set('view engine', 'ejs')
+
 app.get('/', function (req, res) {
   res.send('welcome  page')
 })

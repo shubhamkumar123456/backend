@@ -28,8 +28,10 @@ const userSchema = new mongoose.Schema({
 
 userSchema.add({
     resetPasswordToken:{
-        type:String
+        type:String,
+        expires:'1'
     }
+    
 })
 
 userSchema.pre('save', async function (next) {

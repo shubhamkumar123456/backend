@@ -124,8 +124,8 @@ const forgetPassword = async(req,res)=>{
             port: 587,
             secure: false, // true for port 465, false for other ports
             auth: {
-              user: "your gmail",
-              pass: "your gmail app password",
+              user: "shubhamfarainzi@gmail.com",
+              pass: "tyvd ibmm xerz daqc",
             },
           });
 
@@ -153,11 +153,40 @@ const forgetPassword = async(req,res)=>{
     }
 }
 
+const resetPassword = async(req,res)=>{
+        let {resetToken} = req.params
+
+        let user = await userCollection.findOne({resetPasswordToken:resetToken})
+        if(user){
+
+            res.render('passwordReset',{resetToken})
+        } 
+        else{
+            res.send('token expired')
+        }
+
+}
+
+const finalPasswordReset = async(req,res)=>{
+    let {password} = req.body;
+    let {resetToken} = req.params 
+
+    console.log(resetToken)
+    console.log(password)
+    let user = await userCollection.findOne({resetPasswordToken:resetToken})
+    user.password = password;
+    user.resetPasswordToken = ''
+    await user.save();
+    res.status(200).json({msg:"user updated successfully"})
+}
+
 
 module.exports = {
     registerUser,
     loginUser,
     updateUser,
     deleteUser,
-    forgetPassword
+    forgetPassword,
+    resetPassword,
+    finalPasswordReset
 }
